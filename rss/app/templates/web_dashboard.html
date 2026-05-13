@@ -15,7 +15,6 @@
         .navbar {
             background: rgba(0, 0, 0, 0.3) !important;
             backdrop-filter: blur(10px);
-            border: none;
         }
         .card {
             border: none;
@@ -23,7 +22,9 @@
             box-shadow: 0 10px 20px rgba(0,0,0,0.19), 0 6px 6px rgba(0,0,0,0.23);
             background: rgba(255, 255, 255, 0.95);
             margin-bottom: 20px;
+            position: relative;
         }
+        .card-create { z-index: 10; }
         .btn {
             border-radius: 10px;
             padding: 8px 16px;
@@ -40,145 +41,74 @@
             background: linear-gradient(to right, #5a6fd6, #684291);
         }
 
-        /* 自定义搜索下拉框 */
-        .search-select {
-            position: relative;
-        }
+        /* 搜索下拉框 */
+        .search-select { position: relative; }
         .search-select input {
-            border-radius: 10px;
-            padding: 12px;
-            border: 2px solid #e2e8f0;
-            width: 100%;
-            transition: all 0.3s ease;
-            background: #fff;
+            border-radius: 10px; padding: 12px;
+            border: 2px solid #e2e8f0; width: 100%;
+            transition: all 0.3s ease; background: #fff;
         }
         .search-select input:focus {
             border-color: #764ba2;
             box-shadow: 0 0 0 0.2rem rgba(118,75,162,0.25);
             outline: none;
         }
-        .search-select .dropdown-list {
-            display: none;
-            position: absolute;
-            top: 100%;
-            left: 0;
-            right: 0;
-            max-height: 300px;
-            overflow-y: auto;
-            background: #fff;
-            border: 2px solid #e2e8f0;
-            border-top: none;
-            border-radius: 0 0 10px 10px;
-            z-index: 1000;
+        .dropdown-list {
+            display: none; position: absolute;
+            top: 100%; left: 0; right: 0;
+            max-height: 300px; overflow-y: auto;
+            background: #fff; border: 2px solid #e2e8f0;
+            border-top: none; border-radius: 0 0 10px 10px;
+            z-index: 1050;
             box-shadow: 0 4px 12px rgba(0,0,0,0.15);
         }
-        .search-select .dropdown-list.show {
-            display: block;
-        }
-        .search-select .dropdown-item {
-            padding: 10px 14px;
-            cursor: pointer;
+        .dropdown-list.show { display: block; }
+        .dropdown-item-custom {
+            padding: 10px 14px; cursor: pointer;
             border-bottom: 1px solid #f0f0f0;
         }
-        .search-select .dropdown-item:hover {
-            background: #f0edff;
-        }
-        .search-select .dropdown-item .chat-name {
-            font-weight: 500;
-        }
-        .search-select .dropdown-item .chat-meta {
-            font-size: 0.8em;
-            color: #888;
-        }
-        .badge-type {
-            font-size: 0.7em;
-            padding: 2px 6px;
-            border-radius: 4px;
-            margin-left: 6px;
-        }
+        .dropdown-item-custom:hover { background: #f0edff; }
+        .dropdown-item-custom .item-name { font-weight: 500; }
+        .dropdown-item-custom .item-meta { font-size: 0.8em; color: #888; }
+
+        .badge-type { font-size: 0.7em; padding: 2px 6px; border-radius: 4px; margin-left: 6px; }
         .badge-group { background: #d4edda; color: #155724; }
         .badge-channel { background: #cce5ff; color: #004085; }
         .badge-user { background: #fff3cd; color: #856404; }
+        .badge-feishu { background: #e8daef; color: #6c3483; }
 
-        /* 规则表格 */
-        .rules-table {
-            width: 100%;
+        /* 选中信息 */
+        .selected-info {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 8px 12px; background: #f0edff;
+            border-radius: 8px; margin-top: 6px; font-size: 0.9em;
         }
+        .clear-btn { cursor: pointer; color: #999; margin-left: 8px; }
+        .clear-btn:hover { color: #dc3545; }
+
+        /* 表格 */
+        .rules-table { width: 100%; }
         .rules-table th {
-            background: rgba(118,75,162,0.08);
-            font-weight: 600;
-            color: #4a4a4a;
-            padding: 14px 16px;
+            background: rgba(118,75,162,0.08); font-weight: 600;
+            color: #4a4a4a; padding: 14px 16px;
             border-bottom: 2px solid #e2e8f0;
         }
         .rules-table td {
-            padding: 12px 16px;
-            border-bottom: 1px solid #f0f0f0;
+            padding: 12px 16px; border-bottom: 1px solid #f0f0f0;
             vertical-align: middle;
         }
-        .rules-table tr:last-child td {
-            border-bottom: none;
-        }
-        .form-switch .form-check-input {
-            width: 3em;
-            height: 1.5em;
-            cursor: pointer;
-        }
-        .form-switch .form-check-input:checked {
-            background-color: #764ba2;
-            border-color: #764ba2;
-        }
-        .arrow-icon {
-            color: #764ba2;
-            font-weight: bold;
-        }
-        .empty-state {
-            text-align: center;
-            padding: 40px;
-            color: #999;
-        }
+        .rules-table tr:last-child td { border-bottom: none; }
+        .form-switch .form-check-input { width: 3em; height: 1.5em; cursor: pointer; }
+        .form-switch .form-check-input:checked { background-color: #764ba2; border-color: #764ba2; }
+        .arrow-icon { color: #764ba2; font-weight: bold; }
+        .empty-state { text-align: center; padding: 40px; color: #999; }
+        .toast-container { position: fixed; top: 80px; right: 20px; z-index: 9999; }
 
-        /* Toast */
-        .toast-container {
-            position: fixed;
-            top: 80px;
-            right: 20px;
-            z-index: 9999;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(-10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
+        @keyframes fadeIn { from { opacity:0; transform:translateY(-10px); } to { opacity:1; transform:translateY(0); } }
         .fade-in { animation: fadeIn 0.3s ease forwards; }
-
-        /* 选中状态 */
-        .selected-chat {
-            background: #f0edff;
-            border: 2px solid #764ba2 !important;
-        }
-        .selected-info {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 8px 12px;
-            background: #f0edff;
-            border-radius: 8px;
-            margin-top: 6px;
-            font-size: 0.9em;
-        }
-        .selected-info .clear-btn {
-            cursor: pointer;
-            color: #999;
-            margin-left: 8px;
-        }
-        .selected-info .clear-btn:hover {
-            color: #dc3545;
-        }
     </style>
 </head>
 <body>
-    <!-- 导航栏 -->
     <nav class="navbar navbar-expand-lg navbar-dark mb-4">
         <div class="container">
             <a class="navbar-brand fw-bold" href="/web/dashboard">
@@ -193,30 +123,44 @@
 
     <div class="container pb-5">
         <!-- 新建规则 -->
-        <div class="card fade-in">
+        <div class="card card-create fade-in">
             <div class="card-body p-4">
                 <h5 class="mb-3"><i class="bi bi-plus-circle me-2"></i>新建转发规则</h5>
                 <div class="row g-3 align-items-start">
                     <div class="col-md-5">
-                        <label class="form-label fw-bold">源 (监听)</label>
+                        <label class="form-label fw-bold">TG 源群 (监听)</label>
                         <div class="search-select" id="sourceSelect">
-                            <input type="text" placeholder="搜索群组/频道..." autocomplete="off"
-                                   onfocus="openDropdown('source')" oninput="filterChats('source')">
+                            <input type="text" placeholder="搜索 TG 群组/频道..." autocomplete="off"
+                                   onfocus="openDropdown('source')" oninput="filterList('source')">
                             <div class="dropdown-list" id="sourceDropdown"></div>
-                            <div id="sourceSelected" style="display:none"></div>
                         </div>
+                        <div id="sourceSelected" style="display:none"></div>
                     </div>
                     <div class="col-md-1 text-center" style="padding-top: 38px;">
                         <i class="bi bi-arrow-right-circle-fill arrow-icon" style="font-size:1.5em"></i>
                     </div>
                     <div class="col-md-5">
-                        <label class="form-label fw-bold">目标 (转发到)</label>
-                        <div class="search-select" id="targetSelect">
-                            <input type="text" placeholder="搜索群组/频道..." autocomplete="off"
-                                   onfocus="openDropdown('target')" oninput="filterChats('target')">
-                            <div class="dropdown-list" id="targetDropdown"></div>
-                            <div id="targetSelected" style="display:none"></div>
+                        <label class="form-label fw-bold">飞书目标群
+                            <a href="#" class="ms-2" style="font-size:0.8em; font-weight:normal;" onclick="toggleTargetMode(event)" id="targetModeLink">手动输入</a>
+                        </label>
+                        <!-- 下拉选择模式 -->
+                        <div id="targetDropdownMode">
+                            <div class="search-select" id="targetSelect">
+                                <input type="text" placeholder="搜索飞书群（仅显示机器人已加入的群）..." autocomplete="off"
+                                       onfocus="openDropdown('target')" oninput="filterList('target')">
+                                <div class="dropdown-list" id="targetDropdown"></div>
+                            </div>
                         </div>
+                        <!-- 手动输入模式 -->
+                        <div id="targetManualMode" style="display:none">
+                            <input type="text" id="manualFeishuInput" class="form-control"
+                                   placeholder="输入 Webhook URL 或飞书 chat_id (oc_xxx)"
+                                   style="border-radius:10px; padding:12px; border:2px solid #e2e8f0;">
+                            <div class="form-text text-muted" style="font-size:0.8em; margin-top:4px;">
+                                Webhook 格式: https://open.feishu.cn/open-apis/bot/v2/hook/xxx
+                            </div>
+                        </div>
+                        <div id="targetSelected" style="display:none"></div>
                     </div>
                     <div class="col-md-1 text-center" style="padding-top: 34px;">
                         <button class="btn btn-primary" onclick="createRule()" id="createBtn">
@@ -241,19 +185,15 @@
                         <thead>
                             <tr>
                                 <th>ID</th>
-                                <th>源群</th>
+                                <th>TG 源群</th>
                                 <th></th>
-                                <th>目标群</th>
+                                <th>飞书目标</th>
                                 <th>状态</th>
                                 <th>操作</th>
                             </tr>
                         </thead>
                         <tbody id="rulesBody">
-                            <tr>
-                                <td colspan="6" class="empty-state">
-                                    <i class="bi bi-hourglass-split"></i> 加载中...
-                                </td>
-                            </tr>
+                            <tr><td colspan="6" class="empty-state"><i class="bi bi-hourglass-split"></i> 加载中...</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -261,10 +201,9 @@
         </div>
     </div>
 
-    <!-- Toast 通知 -->
     <div class="toast-container" id="toastContainer"></div>
 
-    <!-- 删除确认弹窗 -->
+    <!-- 删除确认 -->
     <div class="modal fade" id="deleteModal" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content" style="border-radius:15px;">
@@ -272,9 +211,7 @@
                     <h5 class="modal-title">确认删除</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
-                <div class="modal-body" id="deleteModalBody">
-                    确定要删除这条规则吗？关联的关键词、替换规则等都会一并删除。
-                </div>
+                <div class="modal-body" id="deleteModalBody"></div>
                 <div class="modal-footer border-0">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
                     <button type="button" class="btn btn-danger" id="confirmDeleteBtn">删除</button>
@@ -285,16 +222,16 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        let allChats = [];
+        let tgChats = [];
+        let feishuGroups = [];
         let selectedSource = null;
         let selectedTarget = null;
+        let targetManualMode = false;
 
-        // 页面加载
         document.addEventListener('DOMContentLoaded', function() {
             loadChats();
+            loadFeishuGroups();
             loadRules();
-
-            // 点击外部关闭下拉
             document.addEventListener('click', function(e) {
                 if (!e.target.closest('.search-select')) {
                     document.querySelectorAll('.dropdown-list').forEach(d => d.classList.remove('show'));
@@ -302,44 +239,54 @@
             });
         });
 
-        // 加载对话列表
         async function loadChats() {
             try {
                 const res = await fetch('/web/api/chats');
                 const data = await res.json();
-                if (data.success) {
-                    allChats = data.chats;
-                } else {
-                    showToast(data.message || '加载对话列表失败', 'danger');
-                }
-            } catch (e) {
-                showToast('加载对话列表失败', 'danger');
-            }
+                if (data.success) tgChats = data.chats;
+                else showToast(data.message || '加载 TG 对话失败', 'danger');
+            } catch (e) { showToast('加载 TG 对话失败', 'danger'); }
         }
 
-        // 加载规则列表
+        async function loadFeishuGroups() {
+            try {
+                const res = await fetch('/web/api/feishu_groups');
+                const data = await res.json();
+                if (data.success) feishuGroups = data.groups;
+                else showToast(data.message || '加载飞书群失败', 'warning');
+            } catch (e) { showToast('加载飞书群失败', 'danger'); }
+        }
+
         async function loadRules() {
             try {
                 const res = await fetch('/web/api/rules');
                 const data = await res.json();
                 const tbody = document.getElementById('rulesBody');
-
                 if (!data.success) {
-                    tbody.innerHTML = '<tr><td colspan="6" class="empty-state text-danger">' + data.message + '</td></tr>';
+                    tbody.innerHTML = `<tr><td colspan="6" class="empty-state text-danger">${esc(data.message)}</td></tr>`;
                     return;
                 }
-
                 if (data.rules.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="6" class="empty-state">暂无转发规则，请在上方创建</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="6" class="empty-state">暂无转发规则</td></tr>';
                     return;
                 }
 
-                tbody.innerHTML = data.rules.map(rule => `
-                    <tr>
+                // 建立飞书群 chat_id -> name 的映射
+                const feishuMap = {};
+                feishuGroups.forEach(g => feishuMap[g.chat_id] = g.name);
+
+                tbody.innerHTML = data.rules.map(rule => {
+                    const feishuName = rule.feishu_chat_id && feishuMap[rule.feishu_chat_id]
+                        ? feishuMap[rule.feishu_chat_id]
+                        : (rule.push_label || '未配置');
+                    const feishuDisplay = rule.push_label
+                        ? `${esc(feishuName)} <span class="badge-type badge-feishu">飞书</span>`
+                        : '<span class="text-muted">未配置飞书</span>';
+                    return `<tr>
                         <td><span class="text-muted">#${rule.id}</span></td>
-                        <td title="ID: ${rule.source_chat_id}">${escapeHtml(rule.source_name)}</td>
+                        <td>${esc(rule.source_name)}</td>
                         <td class="arrow-icon"><i class="bi bi-arrow-right"></i></td>
-                        <td title="ID: ${rule.target_chat_id}">${escapeHtml(rule.target_name)}</td>
+                        <td>${feishuDisplay}</td>
                         <td>
                             <div class="form-check form-switch">
                                 <input class="form-check-input" type="checkbox"
@@ -349,93 +296,120 @@
                         </td>
                         <td>
                             <button class="btn btn-outline-danger btn-sm"
-                                    onclick="confirmDelete(${rule.id}, '${escapeHtml(rule.source_name)}', '${escapeHtml(rule.target_name)}')">
+                                    onclick="confirmDelete(${rule.id}, '${escAttr(rule.source_name)}', '${escAttr(rule.push_label)}')">
                                 <i class="bi bi-trash"></i>
                             </button>
                         </td>
-                    </tr>
-                `).join('');
+                    </tr>`;
+                }).join('');
             } catch (e) {
-                document.getElementById('rulesBody').innerHTML =
-                    '<tr><td colspan="6" class="empty-state text-danger">加载失败</td></tr>';
+                document.getElementById('rulesBody').innerHTML = '<tr><td colspan="6" class="empty-state text-danger">加载失败</td></tr>';
             }
         }
 
-        // 打开下拉框
         function openDropdown(type) {
-            const dropdown = document.getElementById(type + 'Dropdown');
-            renderChatList(type, '');
-            dropdown.classList.add('show');
+            renderList(type, '');
+            document.getElementById(type === 'source' ? 'sourceDropdown' : 'targetDropdown').classList.add('show');
         }
 
-        // 过滤对话
-        function filterChats(type) {
-            const input = document.querySelector(`#${type}Select input`);
-            renderChatList(type, input.value);
+        function filterList(type) {
+            const input = document.querySelector(`#${type === 'source' ? 'sourceSelect' : 'targetSelect'} input`);
+            renderList(type, input.value);
         }
 
-        // 渲染对话列表
-        function renderChatList(type, keyword) {
-            const dropdown = document.getElementById(type + 'Dropdown');
+        function renderList(type, keyword) {
+            const dropdown = document.getElementById(type === 'source' ? 'sourceDropdown' : 'targetDropdown');
             const kw = keyword.toLowerCase();
-            const filtered = allChats.filter(c => c.name.toLowerCase().includes(kw) || c.id.includes(kw));
 
-            if (filtered.length === 0) {
-                dropdown.innerHTML = '<div class="dropdown-item text-muted">无匹配结果</div>';
-                dropdown.classList.add('show');
-                return;
+            if (type === 'source') {
+                const filtered = tgChats.filter(c => c.name.toLowerCase().includes(kw) || c.id.includes(kw));
+                if (filtered.length === 0) {
+                    dropdown.innerHTML = '<div class="dropdown-item-custom text-muted">无匹配结果</div>';
+                } else {
+                    dropdown.innerHTML = filtered.slice(0, 100).map(chat => {
+                        const typeLabel = chat.type === 'channel' ? '频道' : (chat.type === 'group' ? '群组' : '私聊');
+                        return `<div class="dropdown-item-custom" onclick="selectSource('${chat.id}', '${escAttr(chat.name)}', '${chat.type}')">
+                            <div class="item-name">${esc(chat.name)} <span class="badge-type badge-${chat.type}">${typeLabel}</span></div>
+                            <div class="item-meta">ID: ${chat.id}</div>
+                        </div>`;
+                    }).join('');
+                }
+            } else {
+                const filtered = feishuGroups.filter(g => g.name.toLowerCase().includes(kw) || g.chat_id.includes(kw));
+                if (filtered.length === 0) {
+                    dropdown.innerHTML = '<div class="dropdown-item-custom text-muted">无匹配飞书群</div>';
+                } else {
+                    dropdown.innerHTML = filtered.map(g => {
+                        return `<div class="dropdown-item-custom" onclick="selectTarget('${g.chat_id}', '${escAttr(g.name)}')">
+                            <div class="item-name">${esc(g.name)} <span class="badge-type badge-feishu">飞书</span></div>
+                            <div class="item-meta">${g.chat_id}</div>
+                        </div>`;
+                    }).join('');
+                }
             }
-
-            dropdown.innerHTML = filtered.slice(0, 100).map(chat => {
-                const typeLabel = chat.type === 'channel' ? '频道' : (chat.type === 'group' ? '群组' : '私聊');
-                const badgeClass = 'badge-' + chat.type;
-                return `<div class="dropdown-item" onclick="selectChat('${type}', '${chat.id}', '${escapeAttr(chat.name)}', '${chat.type}')">
-                    <div class="chat-name">${escapeHtml(chat.name)} <span class="badge-type ${badgeClass}">${typeLabel}</span></div>
-                    <div class="chat-meta">ID: ${chat.id}</div>
-                </div>`;
-            }).join('');
             dropdown.classList.add('show');
         }
 
-        // 选择对话
-        function selectChat(type, id, name, chatType) {
-            const obj = {id, name, type: chatType};
-            if (type === 'source') selectedSource = obj;
-            else selectedTarget = obj;
-
-            const input = document.querySelector(`#${type}Select input`);
-            input.value = name;
-            document.getElementById(type + 'Dropdown').classList.remove('show');
-
+        function selectSource(id, name, chatType) {
+            selectedSource = {id, name, type: chatType};
+            document.querySelector('#sourceSelect input').value = name;
+            document.getElementById('sourceDropdown').classList.remove('show');
             const typeLabel = chatType === 'channel' ? '频道' : (chatType === 'group' ? '群组' : '私聊');
-            const selectedDiv = document.getElementById(type + 'Selected');
-            selectedDiv.style.display = 'block';
-            selectedDiv.innerHTML = `<div class="selected-info">
-                <span>${escapeHtml(name)} <span class="badge-type badge-${chatType}">${typeLabel}</span>
-                    <span class="text-muted ms-1" style="font-size:0.85em">ID: ${id}</span>
-                </span>
-                <span class="clear-btn" onclick="clearSelection('${type}')" title="清除"><i class="bi bi-x-circle"></i></span>
+            const div = document.getElementById('sourceSelected');
+            div.style.display = 'block';
+            div.innerHTML = `<div class="selected-info">
+                <span>${esc(name)} <span class="badge-type badge-${chatType}">${typeLabel}</span> <span class="text-muted ms-1" style="font-size:0.85em">ID: ${id}</span></span>
+                <span class="clear-btn" onclick="clearSel('source')" title="清除"><i class="bi bi-x-circle"></i></span>
             </div>`;
         }
 
-        // 清除选择
-        function clearSelection(type) {
+        function selectTarget(chatId, name) {
+            selectedTarget = {chat_id: chatId, name};
+            document.querySelector('#targetSelect input').value = name;
+            document.getElementById('targetDropdown').classList.remove('show');
+            const div = document.getElementById('targetSelected');
+            div.style.display = 'block';
+            div.innerHTML = `<div class="selected-info">
+                <span>${esc(name)} <span class="badge-type badge-feishu">飞书</span> <span class="text-muted ms-1" style="font-size:0.85em">${chatId}</span></span>
+                <span class="clear-btn" onclick="clearSel('target')" title="清除"><i class="bi bi-x-circle"></i></span>
+            </div>`;
+        }
+
+        function clearSel(type) {
             if (type === 'source') selectedSource = null;
             else selectedTarget = null;
-            document.querySelector(`#${type}Select input`).value = '';
+            if (type === 'source') {
+                document.querySelector('#sourceSelect input').value = '';
+            } else {
+                document.querySelector('#targetSelect input').value = '';
+                document.getElementById('manualFeishuInput').value = '';
+            }
             document.getElementById(type + 'Selected').style.display = 'none';
         }
 
-        // 创建规则
+        function toggleTargetMode(e) {
+            e.preventDefault();
+            targetManualMode = !targetManualMode;
+            document.getElementById('targetDropdownMode').style.display = targetManualMode ? 'none' : 'block';
+            document.getElementById('targetManualMode').style.display = targetManualMode ? 'block' : 'none';
+            document.getElementById('targetModeLink').textContent = targetManualMode ? '从列表选择' : '手动输入';
+            clearSel('target');
+        }
+
         async function createRule() {
-            if (!selectedSource || !selectedTarget) {
-                showToast('请选择源群和目标群', 'warning');
-                return;
+            if (!selectedSource) { showToast('请选择 TG 源群', 'warning'); return; }
+
+            let feishuChatId = '';
+            if (targetManualMode) {
+                feishuChatId = document.getElementById('manualFeishuInput').value.trim();
+                if (!feishuChatId) { showToast('请输入飞书 Webhook URL 或 chat_id', 'warning'); return; }
+            } else {
+                if (!selectedTarget) { showToast('请选择飞书目标群', 'warning'); return; }
+                feishuChatId = selectedTarget.chat_id;
             }
 
             const btn = document.getElementById('createBtn');
             btn.disabled = true;
-
             try {
                 const res = await fetch('/web/api/rules', {
                     method: 'POST',
@@ -443,105 +417,74 @@
                     body: JSON.stringify({
                         source_id: selectedSource.id,
                         source_name: selectedSource.name,
-                        target_id: selectedTarget.id,
-                        target_name: selectedTarget.name,
+                        feishu_chat_id: feishuChatId,
+                        push_label: selectedSource.name,
                     })
                 });
                 const data = await res.json();
-
                 if (data.success) {
                     showToast(data.message, 'success');
-                    clearSelection('source');
-                    clearSelection('target');
+                    clearSel('source');
+                    clearSel('target');
                     loadRules();
                 } else {
                     showToast(data.message, 'danger');
                 }
-            } catch (e) {
-                showToast('创建失败', 'danger');
-            } finally {
-                btn.disabled = false;
-            }
+            } catch (e) { showToast('创建失败', 'danger'); }
+            finally { btn.disabled = false; }
         }
 
-        // 切换规则状态
         async function toggleRule(ruleId) {
             try {
                 const res = await fetch(`/web/api/rules/${ruleId}/toggle`, {method: 'PUT'});
                 const data = await res.json();
-                if (data.success) {
-                    showToast(data.message, 'success');
-                } else {
-                    showToast(data.message, 'danger');
-                    loadRules();
-                }
-            } catch (e) {
-                showToast('操作失败', 'danger');
-                loadRules();
-            }
+                if (data.success) showToast(data.message, 'success');
+                else { showToast(data.message, 'danger'); loadRules(); }
+            } catch (e) { showToast('操作失败', 'danger'); loadRules(); }
         }
 
-        // 确认删除
         let deleteRuleId = null;
-        function confirmDelete(ruleId, sourceName, targetName) {
+        function confirmDelete(ruleId, sourceName, pushLabel) {
             deleteRuleId = ruleId;
             document.getElementById('deleteModalBody').innerHTML =
-                `确定要删除规则 <strong>#${ruleId}</strong> (<em>${escapeHtml(sourceName)} -> ${escapeHtml(targetName)}</em>) 吗？<br><br>关联的关键词、替换规则等都会一并删除。`;
+                `确定要删除规则 <strong>#${ruleId}</strong> (<em>${esc(sourceName)} -> ${esc(pushLabel || '飞书')}</em>) 吗？<br><br>关联的关键词、替换规则等都会一并删除。`;
             new bootstrap.Modal(document.getElementById('deleteModal')).show();
         }
 
         document.getElementById('confirmDeleteBtn').addEventListener('click', async function() {
             if (!deleteRuleId) return;
-            const btn = this;
-            btn.disabled = true;
-
+            this.disabled = true;
             try {
                 const res = await fetch(`/web/api/rules/${deleteRuleId}`, {method: 'DELETE'});
                 const data = await res.json();
-                if (data.success) {
-                    showToast(data.message, 'success');
-                    loadRules();
-                } else {
-                    showToast(data.message, 'danger');
-                }
-            } catch (e) {
-                showToast('删除失败', 'danger');
-            } finally {
-                btn.disabled = false;
+                if (data.success) { showToast(data.message, 'success'); loadRules(); }
+                else showToast(data.message, 'danger');
+            } catch (e) { showToast('删除失败', 'danger'); }
+            finally {
+                this.disabled = false;
                 bootstrap.Modal.getInstance(document.getElementById('deleteModal')).hide();
                 deleteRuleId = null;
             }
         });
 
-        // Toast 通知
         function showToast(message, type) {
-            const container = document.getElementById('toastContainer');
+            const c = document.getElementById('toastContainer');
             const id = 'toast_' + Date.now();
-            const bgClass = type === 'success' ? 'bg-success' : type === 'danger' ? 'bg-danger' : 'bg-warning';
-            container.insertAdjacentHTML('beforeend', `
-                <div id="${id}" class="toast align-items-center text-white ${bgClass} border-0 mb-2" role="alert">
+            const bg = type === 'success' ? 'bg-success' : type === 'danger' ? 'bg-danger' : 'bg-warning';
+            c.insertAdjacentHTML('beforeend', `
+                <div id="${id}" class="toast align-items-center text-white ${bg} border-0 mb-2" role="alert">
                     <div class="d-flex">
-                        <div class="toast-body">${escapeHtml(message)}</div>
+                        <div class="toast-body">${esc(message)}</div>
                         <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
                     </div>
-                </div>
-            `);
-            const toast = new bootstrap.Toast(document.getElementById(id), {delay: 3000});
-            toast.show();
+                </div>`);
+            const t = new bootstrap.Toast(document.getElementById(id), {delay: 3000});
+            t.show();
             document.getElementById(id).addEventListener('hidden.bs.toast', function() { this.remove(); });
         }
 
-        function escapeHtml(str) {
-            if (!str) return '';
-            const div = document.createElement('div');
-            div.textContent = str;
-            return div.innerHTML;
-        }
-
-        function escapeAttr(str) {
-            if (!str) return '';
-            return str.replace(/'/g, "\\'").replace(/"/g, '\\"');
-        }
+        function esc(s) { if (!s) return ''; const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+        function escAttr(s) { if (!s) return ''; return s.replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/"/g,'\\"'); }
     </script>
 </body>
 </html>
