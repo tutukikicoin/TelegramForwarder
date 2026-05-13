@@ -5,6 +5,7 @@ from models.models import init_db
 from dotenv import load_dotenv
 from message_listener import setup_listeners
 import os
+import json
 import asyncio
 import logging
 import uvicorn
@@ -77,6 +78,32 @@ def run_rss_server(host: str, port: int):
     )
 
 
+async def cache_dialogs(client):
+    """缓存 Telegram 对话列表到 JSON 文件，供 Web 管理页面使用"""
+    try:
+        dialogs = []
+        async for dialog in client.iter_dialogs():
+            entity = dialog.entity
+            chat_type = 'user'
+            if dialog.is_group:
+                chat_type = 'group'
+            elif dialog.is_channel:
+                chat_type = 'channel'
+
+            dialogs.append({
+                'id': str(entity.id),
+                'name': dialog.name or '未命名',
+                'type': chat_type,
+            })
+
+        cache_path = os.path.join('.', 'db', 'chats_cache.json')
+        with open(cache_path, 'w', encoding='utf-8') as f:
+            json.dump(dialogs, f, ensure_ascii=False, indent=2)
+        logger.info(f"已缓存 {len(dialogs)} 个对话到 {cache_path}")
+    except Exception as e:
+        logger.error(f"缓存对话列表失败: {str(e)}")
+
+
 async def start_clients():
     # 初始化 DBOperations
     global db_ops, scheduler, chat_updater
@@ -106,6 +133,9 @@ async def start_clients():
         # 创建并启动聊天信息更新器
         chat_updater = ChatUpdater(user_client)
         await chat_updater.start()
+
+        # 缓存 Telegram 对话列表供 Web 管理页面使用
+        await cache_dialogs(user_client)
 
         # 如果启用了 RSS 服务
         if os.getenv('RSS_ENABLED', '').lower() == 'true':

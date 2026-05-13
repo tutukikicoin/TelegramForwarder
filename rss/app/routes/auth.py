@@ -171,8 +171,8 @@ async def index(request: Request, user = Depends(get_current_user)):
     if not user:
         return RedirectResponse(url="/login", status_code=status.HTTP_302_FOUND)
     
-    # 直接重定向到 RSS 仪表盘
-    return RedirectResponse(url="/rss/dashboard", status_code=status.HTTP_302_FOUND)
+    # 重定向到 Web 管理页面
+    return RedirectResponse(url="/web/dashboard", status_code=status.HTTP_302_FOUND)
 
 @router.post("/rss/change_password")
 async def change_password(

@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>TG Forwarder - 转发规则管理</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #2c3e50;
+        }
+        .navbar {
+            background: rgba(0, 0, 0, 0.3) !important;
+            backdrop-filter: blur(10px);
+            border: none;
+        }
+        .card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.19), 0 6px 6px rgba(0,0,0,0.23);
+            background: rgba(255, 255, 255, 0.95);
+            margin-bottom: 20px;
+        }
+        .btn {
+            border-radius: 10px;
+            padding: 8px 16px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        .btn-primary {
+            background: linear-gradient(to right, #667eea, #764ba2);
+            border: none;
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 7px 14px rgba(0,0,0,0.18);
+            background: linear-gradient(to right, #5a6fd6, #684291);
+        }
+
+        /* 自定义搜索下拉框 */
+        .search-select {
+            position: relative;
+        }
+        .search-select input {
+            border-radius: 10px;
+            padding: 12px;
+            border: 2px solid #e2e8f0;
+            width: 100%;
+            transition: all 0.3s ease;
+            background: #fff;
+        }
+        .search-select input:focus {
+            border-color: #764ba2;
+            box-shadow: 0 0 0 0.2rem rgba(118,75,162,0.25);
+            outline: none;
+        }
+        .search-select .dropdown-list {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            max-height: 300px;
+            overflow-y: auto;
+            background: #fff;
+            border: 2px solid #e2e8f0;
+            border-top: none;
+            border-radius: 0 0 10px 10px;
+            z-index: 1000;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        .search-select .dropdown-list.show {
+            display: block;
+        }
+        .search-select .dropdown-item {
+            padding: 10px 14px;
+            cursor: pointer;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .search-select .dropdown-item:hover {
+            background: #f0edff;
+        }
+        .search-select .dropdown-item .chat-name {
+            font-weight: 500;
+        }
+        .search-select .dropdown-item .chat-meta {
+            font-size: 0.8em;
+            color: #888;
+        }
+        .badge-type {
+            font-size: 0.7em;
+            padding: 2px 6px;
+            border-radius: 4px;
+            margin-left: 6px;
+        }
+        .badge-group { background: #d4edda; color: #155724; }
+        .badge-channel { background: #cce5ff; color: #004085; }
+        .badge-user { background: #fff3cd; color: #856404; }
+
+        /* 规则表格 */
+        .rules-table {
+            width: 100%;
+        }
+        .rules-table th {
+            background: rgba(118,75,162,0.08);
+            font-weight: 600;
+            color: #4a4a4a;
+            padding: 14px 16px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+        .rules-table td {
+            padding: 12px 16px;
+            border-bottom: 1px solid #f0f0f0;
+            vertical-align: middle;
+        }
+        .rules-table tr:last-child td {
+            border-bottom: none;
+        }
+        .form-switch .form-check-input {
+            width: 3em;
+            height: 1.5em;
+            cursor: pointer;
+        }
+        .form-switch .form-check-input:checked {
+            background-color: #764ba2;
+            border-color: #764ba2;
+        }
+        .arrow-icon {
+            color: #764ba2;
+            font-weight: bold;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
+
+        /* Toast */
+        .toast-container {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            z-index: 9999;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .fade-in { animation: fadeIn 0.3s ease forwards; }
+
+        /* 选中状态 */
+        .selected-chat {
+            background: #f0edff;
+            border: 2px solid #764ba2 !important;
+        }
+        .selected-info {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 12px;
+            background: #f0edff;
+            border-radius: 8px;
+            margin-top: 6px;
+            font-size: 0.9em;
+        }
+        .selected-info .clear-btn {
+            cursor: pointer;
+            color: #999;
+            margin-left: 8px;
+        }
+        .selected-info .clear-btn:hover {
+            color: #dc3545;
+        }
+    </style>
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav class="navbar navbar-expand-lg navbar-dark mb-4">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="/web/dashboard">
+                <i class="bi bi-arrow-left-right me-2"></i>TG Forwarder
+            </a>
+            <div class="d-flex align-items-center">
+                <a href="/rss/dashboard" class="btn btn-outline-light btn-sm me-2">RSS 管理</a>
+                <a href="/logout" class="btn btn-outline-light btn-sm">退出</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container pb-5">
+        <!-- 新建规则 -->
+        <div class="card fade-in">
+            <div class="card-body p-4">
+                <h5 class="mb-3"><i class="bi bi-plus-circle me-2"></i>新建转发规则</h5>
+                <div class="row g-3 align-items-start">
+                    <div class="col-md-5">
+                        <label class="form-label fw-bold">源 (监听)</label>
+                        <div class="search-select" id="sourceSelect">
+                            <input type="text" placeholder="搜索群组/频道..." autocomplete="off"
+                                   onfocus="openDropdown('source')" oninput="filterChats('source')">
+                            <div class="dropdown-list" id="sourceDropdown"></div>
+                            <div id="sourceSelected" style="display:none"></div>
+                        </div>
+                    </div>
+                    <div class="col-md-1 text-center" style="padding-top: 38px;">
+                        <i class="bi bi-arrow-right-circle-fill arrow-icon" style="font-size:1.5em"></i>
+                    </div>
+                    <div class="col-md-5">
+                        <label class="form-label fw-bold">目标 (转发到)</label>
+                        <div class="search-select" id="targetSelect">
+                            <input type="text" placeholder="搜索群组/频道..." autocomplete="off"
+                                   onfocus="openDropdown('target')" oninput="filterChats('target')">
+                            <div class="dropdown-list" id="targetDropdown"></div>
+                            <div id="targetSelected" style="display:none"></div>
+                        </div>
+                    </div>
+                    <div class="col-md-1 text-center" style="padding-top: 34px;">
+                        <button class="btn btn-primary" onclick="createRule()" id="createBtn">
+                            <i class="bi bi-check-lg"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 规则列表 -->
+        <div class="card fade-in">
+            <div class="card-body p-0">
+                <div class="px-4 pt-4 pb-2 d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="bi bi-list-ul me-2"></i>转发规则列表</h5>
+                    <button class="btn btn-outline-secondary btn-sm" onclick="loadRules()">
+                        <i class="bi bi-arrow-clockwise"></i> 刷新
+                    </button>
+                </div>
+                <div class="table-responsive">
+                    <table class="rules-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>源群</th>
+                                <th></th>
+                                <th>目标群</th>
+                                <th>状态</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="rulesBody">
+                            <tr>
+                                <td colspan="6" class="empty-state">
+                                    <i class="bi bi-hourglass-split"></i> 加载中...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast 通知 -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- 删除确认弹窗 -->
+    <div class="modal fade" id="deleteModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content" style="border-radius:15px;">
+                <div class="modal-header border-0">
+                    <h5 class="modal-title">确认删除</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="deleteModalBody">
+                    确定要删除这条规则吗？关联的关键词、替换规则等都会一并删除。
+                </div>
+                <div class="modal-footer border-0">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-danger" id="confirmDeleteBtn">删除</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let allChats = [];
+        let selectedSource = null;
+        let selectedTarget = null;
+
+        // 页面加载
+        document.addEventListener('DOMContentLoaded', function() {
+            loadChats();
+            loadRules();
+
+            // 点击外部关闭下拉
+            document.addEventListener('click', function(e) {
+                if (!e.target.closest('.search-select')) {
+                    document.querySelectorAll('.dropdown-list').forEach(d => d.classList.remove('show'));
+                }
+            });
+        });
+
+        // 加载对话列表
+        async function loadChats() {
+            try {
+                const res = await fetch('/web/api/chats');
+                const data = await res.json();
+                if (data.success) {
+                    allChats = data.chats;
+                } else {
+                    showToast(data.message || '加载对话列表失败', 'danger');
+                }
+            } catch (e) {
+                showToast('加载对话列表失败', 'danger');
+            }
+        }
+
+        // 加载规则列表
+        async function loadRules() {
+            try {
+                const res = await fetch('/web/api/rules');
+                const data = await res.json();
+                const tbody = document.getElementById('rulesBody');
+
+                if (!data.success) {
+                    tbody.innerHTML = '<tr><td colspan="6" class="empty-state text-danger">' + data.message + '</td></tr>';
+                    return;
+                }
+
+                if (data.rules.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="6" class="empty-state">暂无转发规则，请在上方创建</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = data.rules.map(rule => `
+                    <tr>
+                        <td><span class="text-muted">#${rule.id}</span></td>
+                        <td title="ID: ${rule.source_chat_id}">${escapeHtml(rule.source_name)}</td>
+                        <td class="arrow-icon"><i class="bi bi-arrow-right"></i></td>
+                        <td title="ID: ${rule.target_chat_id}">${escapeHtml(rule.target_name)}</td>
+                        <td>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox"
+                                       ${rule.enabled ? 'checked' : ''}
+                                       onchange="toggleRule(${rule.id})">
+                            </div>
+                        </td>
+                        <td>
+                            <button class="btn btn-outline-danger btn-sm"
+                                    onclick="confirmDelete(${rule.id}, '${escapeHtml(rule.source_name)}', '${escapeHtml(rule.target_name)}')">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `).join('');
+            } catch (e) {
+                document.getElementById('rulesBody').innerHTML =
+                    '<tr><td colspan="6" class="empty-state text-danger">加载失败</td></tr>';
+            }
+        }
+
+        // 打开下拉框
+        function openDropdown(type) {
+            const dropdown = document.getElementById(type + 'Dropdown');
+            renderChatList(type, '');
+            dropdown.classList.add('show');
+        }
+
+        // 过滤对话
+        function filterChats(type) {
+            const input = document.querySelector(`#${type}Select input`);
+            renderChatList(type, input.value);
+        }
+
+        // 渲染对话列表
+        function renderChatList(type, keyword) {
+            const dropdown = document.getElementById(type + 'Dropdown');
+            const kw = keyword.toLowerCase();
+            const filtered = allChats.filter(c => c.name.toLowerCase().includes(kw) || c.id.includes(kw));
+
+            if (filtered.length === 0) {
+                dropdown.innerHTML = '<div class="dropdown-item text-muted">无匹配结果</div>';
+                dropdown.classList.add('show');
+                return;
+            }
+
+            dropdown.innerHTML = filtered.slice(0, 100).map(chat => {
+                const typeLabel = chat.type === 'channel' ? '频道' : (chat.type === 'group' ? '群组' : '私聊');
+                const badgeClass = 'badge-' + chat.type;
+                return `<div class="dropdown-item" onclick="selectChat('${type}', '${chat.id}', '${escapeAttr(chat.name)}', '${chat.type}')">
+                    <div class="chat-name">${escapeHtml(chat.name)} <span class="badge-type ${badgeClass}">${typeLabel}</span></div>
+                    <div class="chat-meta">ID: ${chat.id}</div>
+                </div>`;
+            }).join('');
+            dropdown.classList.add('show');
+        }
+
+        // 选择对话
+        function selectChat(type, id, name, chatType) {
+            const obj = {id, name, type: chatType};
+            if (type === 'source') selectedSource = obj;
+            else selectedTarget = obj;
+
+            const input = document.querySelector(`#${type}Select input`);
+            input.value = name;
+            document.getElementById(type + 'Dropdown').classList.remove('show');
+
+            const typeLabel = chatType === 'channel' ? '频道' : (chatType === 'group' ? '群组' : '私聊');
+            const selectedDiv = document.getElementById(type + 'Selected');
+            selectedDiv.style.display = 'block';
+            selectedDiv.innerHTML = `<div class="selected-info">
+                <span>${escapeHtml(name)} <span class="badge-type badge-${chatType}">${typeLabel}</span>
+                    <span class="text-muted ms-1" style="font-size:0.85em">ID: ${id}</span>
+                </span>
+                <span class="clear-btn" onclick="clearSelection('${type}')" title="清除"><i class="bi bi-x-circle"></i></span>
+            </div>`;
+        }
+
+        // 清除选择
+        function clearSelection(type) {
+            if (type === 'source') selectedSource = null;
+            else selectedTarget = null;
+            document.querySelector(`#${type}Select input`).value = '';
+            document.getElementById(type + 'Selected').style.display = 'none';
+        }
+
+        // 创建规则
+        async function createRule() {
+            if (!selectedSource || !selectedTarget) {
+                showToast('请选择源群和目标群', 'warning');
+                return;
+            }
+
+            const btn = document.getElementById('createBtn');
+            btn.disabled = true;
+
+            try {
+                const res = await fetch('/web/api/rules', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        source_id: selectedSource.id,
+                        source_name: selectedSource.name,
+                        target_id: selectedTarget.id,
+                        target_name: selectedTarget.name,
+                    })
+                });
+                const data = await res.json();
+
+                if (data.success) {
+                    showToast(data.message, 'success');
+                    clearSelection('source');
+                    clearSelection('target');
+                    loadRules();
+                } else {
+                    showToast(data.message, 'danger');
+                }
+            } catch (e) {
+                showToast('创建失败', 'danger');
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        // 切换规则状态
+        async function toggleRule(ruleId) {
+            try {
+                const res = await fetch(`/web/api/rules/${ruleId}/toggle`, {method: 'PUT'});
+                const data = await res.json();
+                if (data.success) {
+                    showToast(data.message, 'success');
+                } else {
+                    showToast(data.message, 'danger');
+                    loadRules();
+                }
+            } catch (e) {
+                showToast('操作失败', 'danger');
+                loadRules();
+            }
+        }
+
+        // 确认删除
+        let deleteRuleId = null;
+        function confirmDelete(ruleId, sourceName, targetName) {
+            deleteRuleId = ruleId;
+            document.getElementById('deleteModalBody').innerHTML =
+                `确定要删除规则 <strong>#${ruleId}</strong> (<em>${escapeHtml(sourceName)} -> ${escapeHtml(targetName)}</em>) 吗？<br><br>关联的关键词、替换规则等都会一并删除。`;
+            new bootstrap.Modal(document.getElementById('deleteModal')).show();
+        }
+
+        document.getElementById('confirmDeleteBtn').addEventListener('click', async function() {
+            if (!deleteRuleId) return;
+            const btn = this;
+            btn.disabled = true;
+
+            try {
+                const res = await fetch(`/web/api/rules/${deleteRuleId}`, {method: 'DELETE'});
+                const data = await res.json();
+                if (data.success) {
+                    showToast(data.message, 'success');
+                    loadRules();
+                } else {
+                    showToast(data.message, 'danger');
+                }
+            } catch (e) {
+                showToast('删除失败', 'danger');
+            } finally {
+                btn.disabled = false;
+                bootstrap.Modal.getInstance(document.getElementById('deleteModal')).hide();
+                deleteRuleId = null;
+            }
+        });
+
+        // Toast 通知
+        function showToast(message, type) {
+            const container = document.getElementById('toastContainer');
+            const id = 'toast_' + Date.now();
+            const bgClass = type === 'success' ? 'bg-success' : type === 'danger' ? 'bg-danger' : 'bg-warning';
+            container.insertAdjacentHTML('beforeend', `
+                <div id="${id}" class="toast align-items-center text-white ${bgClass} border-0 mb-2" role="alert">
+                    <div class="d-flex">
+                        <div class="toast-body">${escapeHtml(message)}</div>
+                        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                    </div>
+                </div>
+            `);
+            const toast = new bootstrap.Toast(document.getElementById(id), {delay: 3000});
+            toast.show();
+            document.getElementById(id).addEventListener('hidden.bs.toast', function() { this.remove(); });
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            const div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        }
+
+        function escapeAttr(str) {
+            if (!str) return '';
+            return str.replace(/'/g, "\\'").replace(/"/g, '\\"');
+        }
+    </script>
+</body>
+</html>
