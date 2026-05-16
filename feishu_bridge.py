@@ -2,11 +2,14 @@
 Feishu Bridge Service
 Receives messages from TelegramForwarder (via Apprise json://) and forwards to Feishu groups.
 Auto-translates English content to Chinese using Google Translate.
+Supports forwarding images along with text.
 """
 import time
 import json
 import logging
 import re
+import base64
+import io
 from http.server import HTTPServer, BaseHTTPRequestHandler
 import urllib.request
 import urllib.parse
@@ -25,6 +28,10 @@ DEFAULT_CHAT_IDS = os.getenv('FEISHU_CHAT_IDS', '').split(',')
 # Priority: JSON file > env var
 ROUTES_FILE = os.getenv('FEISHU_ROUTES_FILE', '/app/db/feishu_routes.json')
 ROUTES = {}
+
+# Image extensions for detecting image attachments
+IMAGE_EXTENSIONS = {'.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp'}
+
 
 def load_routes():
     """Load routes from JSON file, fallback to env var"""
@@ -133,24 +140,159 @@ def get_tenant_token():
             return None
 
 
-def send_to_feishu(target, text):
+def upload_image_to_feishu(image_data):
+    """Upload image to Feishu and return image_key.
+
+    Args:
+        image_data: bytes of the image file
+
+    Returns:
+        str: image_key if successful, None otherwise
+    """
+    token = get_tenant_token()
+    if not token:
+        logger.error('No valid token, cannot upload image')
+        return None
+
+    url = 'https://open.feishu.cn/open-apis/im/v1/images'
+
+    # Build multipart/form-data manually
+    boundary = f'----WebKitFormBoundary{int(time.time() * 1000)}'
+
+    body = io.BytesIO()
+    # image_type field
+    body.write(f'--{boundary}\r\n'.encode())
+    body.write(b'Content-Disposition: form-data; name="image_type"\r\n\r\n')
+    body.write(b'message\r\n')
+    # image file field
+    body.write(f'--{boundary}\r\n'.encode())
+    body.write(b'Content-Disposition: form-data; name="image"; filename="image.png"\r\n')
+    body.write(b'Content-Type: application/octet-stream\r\n\r\n')
+    body.write(image_data)
+    body.write(b'\r\n')
+    body.write(f'--{boundary}--\r\n'.encode())
+
+    body_data = body.getvalue()
+
+    req = urllib.request.Request(url, data=body_data, headers={
+        'Authorization': f'Bearer {token}',
+        'Content-Type': f'multipart/form-data; boundary={boundary}'
+    })
+
+    try:
+        with urllib.request.urlopen(req, timeout=30) as resp:
+            result = json.loads(resp.read())
+            if result.get('code') == 0:
+                image_key = result.get('data', {}).get('image_key')
+                logger.info(f'Image uploaded successfully: {image_key}')
+                return image_key
+            else:
+                logger.error(f'Failed to upload image: {result}')
+                return None
+    except Exception as e:
+        logger.error(f'Error uploading image: {e}')
+        return None
+
+
+def is_image_attachment(attachment):
+    """Check if an attachment is an image based on mime_type or file_name"""
+    mime = attachment.get('mime_type', '')
+    if mime.startswith('image/'):
+        return True
+    fname = attachment.get('file_name', '')
+    ext = os.path.splitext(fname)[1].lower()
+    return ext in IMAGE_EXTENSIONS
+
+
+def parse_attachments(data):
+    """Extract image data from Apprise JSON attachments.
+
+    Apprise json:// sends: {"attachments": [{"filename": "...", "base64": "...", "mimetype": "image/..."}]}
+
+    Returns:
+        list of bytes: decoded image data for each image attachment
+    """
+    images = []
+    attachments = data.get('attachments', [])
+    if not attachments:
+        return images
+
+    for att in attachments:
+        # Check mimetype or filename for image detection
+        mime = att.get('mimetype', '') or att.get('mime_type', '')
+        fname = att.get('filename', '') or att.get('file_name', '')
+        is_image = mime.startswith('image/')
+        if not is_image:
+            ext = os.path.splitext(fname)[1].lower()
+            is_image = ext in IMAGE_EXTENSIONS
+
+        if not is_image:
+            logger.info(f'Skipping non-image attachment: {fname} ({mime})')
+            continue
+
+        # Apprise json:// sends base64-encoded data in "base64" field
+        b64_data = att.get('base64', '')
+        if b64_data:
+            try:
+                images.append(base64.b64decode(b64_data))
+                logger.info(f'Decoded image attachment: {fname} ({mime}, {len(images[-1])} bytes)')
+            except Exception as e:
+                logger.error(f'Failed to decode image attachment: {e}')
+
+    return images
+
+
+def build_post_content(text, image_keys):
+    """Build Feishu rich text (post) content with text and images.
+
+    Args:
+        text: message text
+        image_keys: list of uploaded image keys
+
+    Returns:
+        dict: Feishu post message content
+    """
+    content = []
+    # Add text lines
+    if text:
+        for line in text.split('\n'):
+            content.append([{"tag": "text", "text": line}])
+    # Add images
+    for key in image_keys:
+        content.append([{"tag": "img", "image_key": key}])
+
+    return {
+        "zh_cn": {
+            "content": content
+        }
+    }
+
+
+def send_to_feishu(target, text, image_keys=None):
     """Send message to a Feishu group (via app API or webhook)"""
     if target.startswith('https://'):
-        return send_via_webhook(target, text)
+        return send_via_webhook(target, text, image_keys)
     else:
-        return send_via_app(target, text)
+        return send_via_app(target, text, image_keys)
 
 
-def send_via_webhook(webhook_url, text):
+def send_via_webhook(webhook_url, text, image_keys=None):
     """Send message via Feishu webhook with signature"""
     import hashlib
     import hmac
-    import base64
 
     sign_key = os.getenv('FEISHU_WEBHOOK_SECRET', '')
     timestamp = str(int(time.time()))
 
-    payload = {'msg_type': 'text', 'content': {'text': text}}
+    # Use rich text if we have images, otherwise plain text
+    if image_keys:
+        post_content = build_post_content(text, image_keys)
+        payload = {
+            'msg_type': 'post',
+            'content': {'post': post_content}
+        }
+    else:
+        payload = {'msg_type': 'text', 'content': {'text': text}}
 
     if sign_key:
         # Feishu webhook signature: HMAC-SHA256(secret, timestamp + "\n" + secret)
@@ -167,7 +309,7 @@ def send_via_webhook(webhook_url, text):
         with urllib.request.urlopen(req, timeout=10) as resp:
             result = json.loads(resp.read())
             if result.get('StatusCode') == 0 or result.get('code') == 0:
-                logger.info(f'Message sent via webhook')
+                logger.info(f'Message sent via webhook (images: {len(image_keys) if image_keys else 0})')
                 return True
             else:
                 logger.error(f'Webhook send failed: {result}')
@@ -177,7 +319,7 @@ def send_via_webhook(webhook_url, text):
         return False
 
 
-def send_via_app(chat_id, text):
+def send_via_app(chat_id, text, image_keys=None):
     """Send message via Feishu app API"""
     token = get_tenant_token()
     if not token:
@@ -185,11 +327,22 @@ def send_via_app(chat_id, text):
         return False
 
     url = 'https://open.feishu.cn/open-apis/im/v1/messages?receive_id_type=chat_id'
-    payload = {
-        'receive_id': chat_id,
-        'msg_type': 'text',
-        'content': json.dumps({'text': text})
-    }
+
+    # Use rich text if we have images, otherwise plain text
+    if image_keys:
+        post_content = build_post_content(text, image_keys)
+        payload = {
+            'receive_id': chat_id,
+            'msg_type': 'post',
+            'content': json.dumps({'post': post_content})
+        }
+    else:
+        payload = {
+            'receive_id': chat_id,
+            'msg_type': 'text',
+            'content': json.dumps({'text': text})
+        }
+
     data = json.dumps(payload).encode()
     req = urllib.request.Request(url, data=data, headers={
         'Content-Type': 'application/json',
@@ -200,7 +353,7 @@ def send_via_app(chat_id, text):
         with urllib.request.urlopen(req, timeout=10) as resp:
             result = json.loads(resp.read())
             if result.get('code') == 0:
-                logger.info(f'Message sent to {chat_id}')
+                logger.info(f'Message sent to {chat_id} (images: {len(image_keys) if image_keys else 0})')
                 return True
             else:
                 logger.error(f'Failed to send message: {result}')
@@ -222,13 +375,24 @@ class BridgeHandler(BaseHTTPRequestHandler):
             source_group = urllib.parse.unquote(self.path.strip('/')) if self.path and self.path != '/' else ''
 
             # Parse the message from Apprise json:// format
+            image_keys = []
             if body:
                 data = json.loads(body)
-                # Apprise sends: {"title": "...", "body": "...", "type": "..."}
-                text = data.get('body', '') or data.get('message', '') or str(data)
+                # Apprise sends: {"version": "1.0", "title": "...", "message": "...", "type": "...", "attachments": [...]}
+                text = data.get('message', '') or data.get('body', '') or str(data)
                 title = data.get('title', '')
                 if title and title != 'Apprise':
                     text = f"**{title}**\n{text}"
+
+                # Parse and upload image attachments
+                images = parse_attachments(data)
+                if images:
+                    logger.info(f'Found {len(images)} image attachment(s), uploading to Feishu...')
+                    for img_data in images:
+                        image_key = upload_image_to_feishu(img_data)
+                        if image_key:
+                            image_keys.append(image_key)
+                    logger.info(f'Successfully uploaded {len(image_keys)} image(s)')
             else:
                 text = ''
 
@@ -236,7 +400,7 @@ class BridgeHandler(BaseHTTPRequestHandler):
             if source_group and text:
                 text = f"【{source_group}】\n{text}"
 
-            if not text:
+            if not text and not image_keys:
                 self.send_response(200)
                 self.end_headers()
                 self.wfile.write(b'{"status": "empty"}')
@@ -262,7 +426,7 @@ class BridgeHandler(BaseHTTPRequestHandler):
 
             success = False
             for chat_id in target_chats:
-                if send_to_feishu(chat_id, text):
+                if send_to_feishu(chat_id, text, image_keys if image_keys else None):
                     success = True
 
             self.send_response(200 if success else 500)
