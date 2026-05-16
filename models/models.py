@@ -471,11 +471,16 @@ def init_db():
 
     return engine
 
+_session_engine = None
+_SessionFactory = None
+
 def get_session():
-    """创建会话工厂"""
-    engine = create_engine('sqlite:///./db/forward.db')
-    Session = sessionmaker(bind=engine)
-    return Session()
+    """创建会话，复用全局 engine 避免内存泄漏"""
+    global _session_engine, _SessionFactory
+    if _session_engine is None:
+        _session_engine = create_engine('sqlite:///./db/forward.db')
+        _SessionFactory = sessionmaker(bind=_session_engine)
+    return _SessionFactory()
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO)

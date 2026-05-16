@@ -160,11 +160,31 @@ async def start_clients():
         # 发送欢迎消息
         await send_welcome_message(bot_client)
 
-        # 等待两个客户端都断开连接
-        await asyncio.gather(
-            user_client.run_until_disconnected(),
-            bot_client.run_until_disconnected()
-        )
+        # 等待客户端断开，任一断开则重连
+        while True:
+            try:
+                done, pending = await asyncio.wait(
+                    [
+                        asyncio.create_task(user_client.run_until_disconnected()),
+                        asyncio.create_task(bot_client.run_until_disconnected()),
+                    ],
+                    return_when=asyncio.FIRST_COMPLETED,
+                )
+                for task in pending:
+                    task.cancel()
+                logger.warning("客户端断开连接，10秒后尝试重连...")
+                await asyncio.sleep(10)
+                if not user_client.is_connected():
+                    await user_client.connect()
+                    await user_client.start(phone=phone_number)
+                    logger.info("用户客户端已重连")
+                if not bot_client.is_connected():
+                    await bot_client.connect()
+                    await bot_client.start(bot_token=bot_token)
+                    logger.info("机器人客户端已重连")
+            except Exception as e:
+                logger.error(f"重连时出错: {str(e)}，30秒后重试...")
+                await asyncio.sleep(30)
     finally:
         # 关闭 DBOperations
         if db_ops and hasattr(db_ops, 'close'):
@@ -368,11 +388,7 @@ async def register_bot_commands(bot):
 
 
 if __name__ == '__main__':
-    # 运行事件循环
-    loop = asyncio.get_event_loop()
     try:
-        loop.run_until_complete(start_clients())
+        asyncio.run(start_clients())
     except KeyboardInterrupt:
         print("正在关闭客户端...")
-    finally:
-        loop.close()
