@@ -16,6 +16,7 @@ from scheduler.chat_updater import ChatUpdater
 from handlers.bot_handler import send_welcome_message
 from rss.main import app as rss_app
 from utils.log_config import setup_logging
+from urllib.parse import urlparse
 
 # 设置Docker日志的默认配置，如果docker-compose.yml中没有配置日志选项将使用这些值
 os.environ.setdefault('DOCKER_LOG_MAX_SIZE', '10m')
@@ -34,6 +35,33 @@ api_id = os.getenv('API_ID')
 api_hash = os.getenv('API_HASH')
 bot_token = os.getenv('BOT_TOKEN')
 phone_number = os.getenv('PHONE_NUMBER')
+
+
+def get_telegram_proxy():
+    raw_proxy = os.getenv('TG_PROXY') or os.getenv('TELEGRAM_PROXY')
+    if not raw_proxy:
+        return None
+
+    import socks
+
+    parsed = urlparse(raw_proxy if '://' in raw_proxy else f'socks5://{raw_proxy}')
+    proxy_types = {
+        'socks5': socks.SOCKS5,
+        'socks4': socks.SOCKS4,
+        'http': socks.HTTP,
+    }
+    proxy_type = proxy_types.get(parsed.scheme.lower())
+    if proxy_type is None or not parsed.hostname or not parsed.port:
+        raise ValueError('TG_PROXY must look like socks5://host:port')
+
+    return (
+        proxy_type,
+        parsed.hostname,
+        parsed.port,
+        True,
+        parsed.username,
+        parsed.password,
+    )
 
 # 创建 DBOperations 实例
 db_ops = None
@@ -62,8 +90,9 @@ def clear_temp_dir():
 
 
 # 创建客户端
-user_client = TelegramClient('./sessions/user', api_id, api_hash)
-bot_client = TelegramClient('./sessions/bot', api_id, api_hash)
+telegram_proxy = get_telegram_proxy()
+user_client = TelegramClient('./sessions/user', api_id, api_hash, proxy=telegram_proxy)
+bot_client = TelegramClient('./sessions/bot', api_id, api_hash, proxy=telegram_proxy)
 
 # 初始化数据库
 engine = init_db()

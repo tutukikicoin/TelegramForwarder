@@ -1,6 +1,8 @@
 services:
   telegram-forwarder:
-    image: heavrnl/telegramforwarder:latest
+    build:
+      context: .
+    image: tgforwarder-local:latest
     container_name: telegram-forwarder
     restart: unless-stopped
     ports:
@@ -35,6 +37,7 @@ services:
     environment:
       - FEISHU_APP_ID=cli_a95902db34b8dbc9
       - FEISHU_APP_SECRET=0u7wB9AimKclxwmk7bY25g5BCLFwUFyc
+      - TG_PROXY=socks5://host.docker.internal:10808
     logging:
       driver: "json-file"
       options:

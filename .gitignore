@@ -34,3 +34,6 @@ handlers/bot_handler copy.py
 /logs
 logs/telegram_forwarder.log
 runtime_exports/
+backup-before-promote-*/
+db/chats_cache.json
+db/db/
